@@ -1,0 +1,13 @@
+.admin-table-booking .admin-td-booking, .admin-th-booking {
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.admin-table-booking {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.admin-table-booking .admin-th-booking, .admin-td-booking {
+    padding: 15px;
+}

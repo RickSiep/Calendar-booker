@@ -1,0 +1,15 @@
+{
+  "name": "calendar-planner",
+  "version": "1.0.0",
+  "description": "Calendar planner",
+  "main": "calendar.php",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Renew Studio's",
+  "license": "ISC",
+  "dependencies": {
+    "@fullcalendar/core": "^4.4.0",
+    "@fullcalendar/daygrid": "^4.4.0"
+  }
+}

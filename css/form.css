@@ -1,0 +1,100 @@
+/* Form wrapper */
+.booking-form-wrapper {
+    display: flex;
+    border-radius: 5px;
+    background-color: #f6f6f6;
+    padding: 20px;
+}
+
+.booking-form-divider {
+    flex: 1;
+    margin: 20px;
+}
+
+.booking-form-divider input[type="text"] {
+    background-color: #fff;
+}
+
+.booking-form-divider input[type="email"] {
+    background-color: #fff;
+}
+
+.booking-form-divider input[type="text"]:disabled {
+    cursor: not-allowed;
+}
+
+.booking-form-input input{
+    margin: 10px 0;
+}
+
+/* Dates */
+.booking-form-dates {
+    display: flex;
+    justify-content: space-between;
+}
+
+.booking-form-dates input[type="text"] {
+    width: 40%;
+    margin: 10px 0;
+}
+
+.booking-form-dates input[type="number"] {
+    width: 40%;
+    margin: 10px 0;
+}
+
+.booking-form-icon {
+    align-self: center;
+}
+
+/* Price section */
+.booking-form-price-section {
+    padding: 20px;
+    background-color: #fff;
+}
+
+.booking-form-price-text {
+    display: flex;
+    justify-content: space-between;
+}
+
+.booking-form-blue-color {
+    color: #00bff3;
+}
+
+.booking-form-divider.booking-form-right {
+    margin: 20px;
+    align-self: center;
+}
+
+@media only screen and (max-width: 992px) {
+    .booking-form-wrapper {
+        display: flex;
+        flex-direction: column;
+        border-radius: 5px;
+        background-color: #f6f6f6;
+        padding: 20px;
+    }
+
+    .booking-form-dates input[type="text"] {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .booking-form-icon::before {
+        display: none;
+    }
+
+    .booking-form-dates {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Prices section */
+    .booking-form-price-section {
+        font-size: 12px;
+    }
+    .booking-form-divider.booking-form-right {
+        width: 100%;
+    }
+}
