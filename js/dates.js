@@ -17,6 +17,10 @@ let price = 0;
 let halfPrice = 0;
 let minDate = 0;
 
+// Get today plus one week
+let todayDate = new Date();
+todayDate.setDate(todayDate.getDate() + 7);
+
 function getDates(startDate, stopDate) {
     price = 0;
     startDate = moment(startDate);
@@ -100,7 +104,7 @@ jQuery(document).ready(function($) {
         // First datepicker
         date_first.datepicker({
             dateFormat: "yy-mm-dd",
-            minDate: 0,
+            minDate: todayDate,
             showWeek: 1,
             beforeShowDay: function(date){
                 let dateString = jQuery.datepicker.formatDate('yy-mm-dd', date);
@@ -116,9 +120,11 @@ jQuery(document).ready(function($) {
 
                 // This is the date for the second datepicker that you can't go lower on
                 setDate = new Date(first_selected);
+                setDate.setDate(setDate.getDate() + 1);
 
                 // Un disable the second datepicker
                 date_till.prop("disabled", false);
+                date_till.val("");
 
                 // Destroy the second datepicker, and refresh it with new data.
                 date_till.datepicker("destroy");
@@ -138,19 +144,22 @@ jQuery(document).ready(function($) {
                     if (first_selected < day[i]) {
                         // If it's not in the end date array.
                         if (enddatesNoTime.indexOf(day[i]) === -1) {
+                            // Check if you select a friday, and if it's possible to then book on the next monday
                             index = startdatesNoTime.indexOf(day[i]);
                             notDisabled = day[index];
                             maxSecondDate = new Date(startdatesNoTime[index]);
                             maxSecondDate.setDate(maxSecondDate.getDate() + 1);
-                            console.log(maxSecondDate);
+                            date_till.datepicker("destroy");
                             date_till.datepicker("option", "maxDate", maxSecondDate);
-                            date_till.val("");
+                            setSecondDatePicker();
                             break;
                         } else {
                             notDisabled = null;
                             maxSecondDate = new Date(day[i]);
+                            maxSecondDate.setDate(maxSecondDate.getDate() + 1);
+                            date_till.datepicker("destroy");
                             date_till.datepicker("option", "maxDate", maxSecondDate);
-                            date_till.val("");
+                            setSecondDatePicker();
                             break;
                         }
                         break;
@@ -202,7 +211,4 @@ jQuery(document).ready(function($) {
             }
         });
     }
-
-
-
 });

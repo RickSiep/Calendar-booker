@@ -208,9 +208,7 @@ class SettingsPage
                         <th scope="row" class="admin-th-booking"><?php echo $result->name ?></th>
                         <td class="admin-td-booking"><a href='mailto:<?php echo $result->email ?>'><?php echo $result->email ?></a></td>
                         <td class="admin-td-booking"><?php echo $result->phone ?></td>
-                        <td class="admin-td-booking">
-                            <input type="text" value="<?php echo $result->status ?>" name="status">
-                        </td>
+                        <td class="admin-td-booking"><?php echo $result->status ?></td>
                         <td class="admin-td-booking"><?php echo $result->start_date ?></td>
                         <td class="admin-td-booking"><?php echo $result->end_date ?></td>
                         <td class="admin-td-booking"><?php echo $result->price ?></td>
@@ -240,16 +238,20 @@ class SettingsPage
         $form->createAdminForm();
     }
 
+//    Create mail page
     public function createMailPage()
     {
         ?>
-        <h3>Attachment is: <?php echo get_option('attachment')?></h3>
+        <h3>Mail is: <?php echo get_option('calendar_mail')?></h3>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="save_mail">
-              <?php
-                $content = get_option('calendar_mail');
-                wp_editor($content,'mail_field');
-              ?>
+            <h2>Tekst voor de mail</h2>
+            <input type="file" name="mail" accept=".txt" value="mail">
+            <br>
+            <br>
+
+            <h3>Attachment is: <?php echo get_option('attachment')?></h3>
+            <h2>File die bij de mail zit</h2>
             <input type="file" value="attachment" accept=".doc,.docx,.pdf" name="attachment">
             <br>
             <input type="submit" class="button btn-primary" value="Verstuur" name="submit">
@@ -273,7 +275,6 @@ class SettingsPage
 
         $result = json_decode(json_encode($result), true);
 
-        var_dump($result[0]['name']);
         ?>
         <h3>Bewerk <?php echo $result[0]['name'] ?></h3>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="POST">
@@ -396,7 +397,6 @@ function saveBooking()
 {
     global $wpdb;
 
-    $form = new FormDate();
     $table_name = $wpdb->prefix . 'bookings';
     $id = $_POST['id'];
 
@@ -412,6 +412,7 @@ function saveBooking()
 
     $date_till->setTime(12, 55);
 
+//    The data you get from the post
     $data_post = [
         'name' => $name,
         'email' => $email,
@@ -423,10 +424,12 @@ function saveBooking()
         'created_at' => current_time('mysql')
     ];
 
+//    Get the id of the user and put it into an array, because it works better with wpdb update.
     $data_id = [
             'id' => $id
     ];
 
+//    Update the post
     $wpdb->update(
         $table_name,
         $data_post,
@@ -439,30 +442,20 @@ function saveBooking()
 
 function saveMail()
 {
-    $mail = $_POST['mail_field'];
-
-    update_option('calendar_mail', $mail, 'false');
-
-//    Upload file
-    $targetDir = __DIR__ . '\attachments\\';
-    $fileName = basename($_FILES["attachment"]["name"]);
-
-    $targetFilePath = $targetDir . $fileName;
-    $fileType = pathinfo($targetFilePath,PATHINFO_EXTENSION);
-
-    if(!empty($_FILES["attachment"]["name"])) {
-        //allow certain file formats
-        $allowTypes = array('docx', 'doc', 'pdf');
-        if (in_array($fileType, $allowTypes)) {
-            //upload file to server
-            if(get_option('attachment')) {
-                unlink(get_option('attachment'));
-            }
-            $targetFilePath = str_replace('\\', '/', $targetFilePath);
-            copy($_FILES["attachment"]["tmp_name"], $targetFilePath);
-            $attachment = $targetFilePath;
-            update_option('attachment', $attachment, false);
+//    Check if the mail.txt isn't empty, then run function
+    if(!empty($_FILES["mail"]["name"])) {
+        if (get_option('calendar_mail')) {
+            unlink(get_option('calendar_mail'));
         }
+        update_option('calendar_mail', uploadFile($_FILES['mail']), false);
+    }
+
+//    Check if the attachment itself isn't empty
+    if(!empty($_FILES["attachment"]["name"])) {
+        if (get_option('attachment')) {
+            unlink(get_option('attachment'));
+        }
+        update_option('attachment', uploadFile($_FILES['attachment']), false);
     }
 
    wp_safe_redirect(wp_get_referer());
@@ -476,6 +469,28 @@ function numeric($num){
         return false;
     }
     else return true;
+}
+
+function uploadFile($file) {
+//    The directory where the file is going to go.
+    $targetDir = __DIR__ . '\attachments\\';
+    $fileNameDoc = basename($file["name"]);
+
+//    Check the filepath, and what filetype it is.
+    $targetFilePath = $targetDir . $fileNameDoc;
+    $fileType = pathinfo($targetFilePath,PATHINFO_EXTENSION);
+
+//  If the file isn't empty
+    if(!empty($file["name"])) {
+        //allow certain file formats
+        $allowTypes = array('txt', 'docx', 'doc', 'pdf');
+        if (in_array($fileType, $allowTypes)) {
+            $targetFilePath = str_replace('\\', '/', $targetFilePath);
+            copy($file["tmp_name"], $targetFilePath);
+            $attachment = $targetFilePath;
+            return $attachment;
+        }
+    }
 }
 
 function calculatePrice($start_date, $stop_date)

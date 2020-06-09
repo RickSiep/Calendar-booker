@@ -1,12 +1,13 @@
 
-# Calendar planner
+# FullCalendar [![Build Status](https://travis-ci.com/fullcalendar/fullcalendar.svg?branch=master)](https://travis-ci.com/fullcalendar/fullcalendar)
 
-A plugin created for a rental house in Cadzand.
+A full-sized drag & drop JavaScript event calendar
 
-Features that are included in this plugin
- -Customise mail
- -Add planning to database
- -A calendar based on Fullcalendar where you can see who reserved for when
- And more!
+- [Project website and demos](http://fullcalendar.io/)
+- [Documentation](http://fullcalendar.io/docs)
+- [Support](http://fullcalendar.io/support)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [License](LICENSE.txt)
 
-Created by Rick Siepelinga
+*From the blog*: [Changes in the Upcoming v5](https://fullcalendar.io/blog/2020/02/changes-in-the-upcoming-v5)

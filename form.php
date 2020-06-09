@@ -58,7 +58,7 @@ class FormDate
 
                         <div class="booking-form-input">
                             <label for="phone_form">Personen boven de 13</label>
-                            <input type="number" id="person_form" placeholder="Personen" name="person" required>
+                            <input type="number" id="person_form" placeholder="Personen" name="people" required>
                         </div>
 
                         <div class="booking-form-price-section">
@@ -68,7 +68,7 @@ class FormDate
                             </div>
 
                             <div class="booking-form-price-text">
-                                <p>Op aankomst</p>
+                                <p>Betalen zo snel mogelijk</p>
                                 <p id="price_second" class="booking-form-blue-color"></p>
                             </div>
 
@@ -136,6 +136,11 @@ class FormDate
 
                 <div class="booking-form-divider booking-form-right">
 
+                    <div class="booking-form-input">
+                        <label for="phone_form">Personen boven de 13</label>
+                        <input type="number" id="person_form" placeholder="Personen" name="people" required>
+                    </div>
+
                     <div class="booking-form-price-section">
 
                         <div class="booking-form-price-text">
@@ -164,7 +169,7 @@ class FormDate
         <?php
     }
 
-    public function dataFormSubmit()
+    public static function dataFormSubmit()
     {
 //        if ($_POST['token'] == $_SESSION['token'])
 //        {
@@ -175,9 +180,10 @@ class FormDate
             $name = sanitize_text_field($_POST['name']);
             $email = sanitize_text_field($_POST['email']);
             $phone = sanitize_text_field($_POST['phone']);
+            $people = sanitize_text_field($_POST['people']);
             $date_from = sanitize_text_field($_POST['from']);
             $date_till = sanitize_text_field($_POST['till']);
-            $price = calculatePriceForm($date_from, $date_till);
+            $price = calculatePriceForm($date_from, $date_till, $people);
 
             $date_till_dateTime = new DateTime($date_till);
 
@@ -204,8 +210,15 @@ class FormDate
 ////      destroy the session
 //        session_destroy();
 
-        wp_mail($email, 'Cadzand boeking', get_option('calendar_mail'), 'Content-Type: text/html; charset=UTF-8', get_option('attachment'));
-        wp_mail($email, 'Cadzand boeking',
+        $search = ['$name', '$price'];
+        $replace = [$name, $price];
+        $mailText = nl2br(file_get_contents(get_option('calendar_mail')));
+
+        $mailTest = str_replace($search, $replace, $mailText);
+
+        wp_mail($email, 'Cadzand boeking', $mailTest, 'Content-Type: text/html; charset=UTF-8', get_option('attachment'));
+
+        wp_mail('rick-siepelinga@hotmail.com', 'Cadzand boeking',
             '<h2>Een nieuwe boeking</h2>
              <br>
              ' . $email . '<p>Heeft een boeking gemaakt, van ' . $date_from . ' tot ' . $date_till . '</p>
@@ -217,12 +230,15 @@ class FormDate
     }
 }
 
-function calculatePriceForm($start_date, $stop_date)
+function calculatePriceForm($start_date, $stop_date, $people)
 {
     $price = 0;
     $dates = [];
     $date_from = new DateTime($start_date);
     $date_till = new DateTime($stop_date);
+
+//    Calculate people prices
+    $people_price = ($people * 1.50);
 
     while($date_from <= $date_till) {
         array_push($dates, $date_from);
@@ -230,12 +246,15 @@ function calculatePriceForm($start_date, $stop_date)
         switch ($date_from->format('m')) {
             case 1: case 2: case 3: case 10: case 11: case 12:
             $price += (int)get_option('low_price');
+            $price += $people_price;
             break;
             case 7: case 8:
             $price += (int)get_option('summer_price');
+            $price += $people_price;
             break;
             case 4: case 5: case 6: case 9:
             $price += (int)get_option('late_price');
+            $price += $people_price;
             break;
         }
     }
