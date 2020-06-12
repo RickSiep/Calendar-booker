@@ -25,22 +25,24 @@ class SettingsPage
 //        Add the menu page
         add_menu_page(
             __('calendar-settings', 'textdomain'),
-            'Calendar menu',
-            'manage_options',
-            'calendar-menu',
-            array($this, 'createAdminPage'),
-            'dashicons-welcome-widgets-menus',
-            6
+            'Calendar menu', // Name of the page
+            'manage_options', // Rights of the page
+            'calendar-menu', // slug of the page
+            array($this, 'createAdminPage'), // Function in
+            'dashicons-welcome-widgets-menus', // Which icon gets used
+            6 // How high the page needs to be in the sidebar of the admin page
         );
+
 //        Check all the orders page
         add_submenu_page(
-            'calendar-menu',
-            'Check orders',
-            'Check orders',
-            'manage_options',
-            'calender-menu',
-            array($this, 'createOrderPage')
+            'calendar-menu',  // Sub page of Calendar menu
+            'Check orders', // Title of the page
+            'Check orders', // name of the page
+            'manage_options', // Right's of the page
+            'orders-menu', // slug menu name
+            array($this, 'createOrderPage')  // The function in which the page gets created
         );
+
 //        Nieuwe date page
         add_submenu_page(
             'calendar-menu',
@@ -70,10 +72,6 @@ class SettingsPage
             array($this, 'createNewEditPage')
         );
     }
-
-    /**
-     * Options page callback
-     */
 
     /**
      * Register and add settings
@@ -177,6 +175,7 @@ class SettingsPage
         <?php
     }
 
+//  Check all the orders
     public function createOrderPage()
     {
         global $wpdb;
@@ -232,13 +231,14 @@ class SettingsPage
         <?php
     }
 
+//    Create the page through the Form class. Use the create admin form function
     public function createNewDatePage()
     {
         $form = new FormDate();
         $form->createAdminForm();
     }
 
-//    Create mail page
+//    Create mail page, in this function you can upload txt files and
     public function createMailPage()
     {
         ?>
@@ -331,20 +331,35 @@ class SettingsPage
                         </select>
                     </div>
 
+                    <label for="person_form">Personen 13+ en aantal honden</label>
+                    <br>
+                    <div class="booking-form-dates">
+                        <input type="number" id="person_form" placeholder="Personen" name="people">
+                        <i class="fas fa-minus fa-2x booking-form-icon"></i>
+                        <input type="number" id="dog_form" name="dogs" placeholder="Honden">
+                    </div>
+
                     <div class="booking-form-price-section">
                         <div class="booking-form-price-text">
-                            <p>Aanbetaling</p>
+                            <p>Betaling een week van te voren</p>
                             <p id="price_first" class="booking-form-blue-color"></p>
                         </div>
+
                         <div class="booking-form-price-text">
-                            <p>Op aankomst</p>
+                            <p>Betalen zo snel mogelijk</p>
+                            <p id="price_second" class="booking-form-blue-color"></p>
+                        </div>
+
+                        <div class="booking-form-price-text">
+                            <p>Totaal</p>
                             <p id="total_price" class="booking-form-blue-color"></p>
                         </div>
+
+
                     </div>
 
                     <input type="submit" value="Verstuur edit" class="button button-primary">
 
-                </div>
             </div>
         </form>
         <?php
@@ -373,9 +388,7 @@ function setPrices()
         }
     }
 
-    $location = wp_get_referer();
-    header("Location: $location");
-
+    wp_safe_redirect(wp_get_referer());
 }
 
 // Deletes a booking
@@ -403,10 +416,12 @@ function saveBooking()
     $name = sanitize_text_field($_POST['name']);
     $email = sanitize_text_field($_POST['email']);
     $phone = sanitize_text_field($_POST['phone']);
+    $people = sanitize_text_field($_POST['people']);
+    $dogs = sanitize_text_field($_POST['dogs']);
     $status = sanitize_text_field($_POST['status']);
     $date_from = sanitize_text_field($_POST['from']);
     $date_till = sanitize_text_field($_POST['till']);
-    $price = calculatePrice($date_from, $date_till);
+    $price = calculatePrice($date_from, $date_till, $people, $dogs);
 
     $date_till = new DateTime($date_till);
 
@@ -440,6 +455,7 @@ function saveBooking()
 
 }
 
+// Save the mail that got sent
 function saveMail()
 {
 //    Check if the mail.txt isn't empty, then run function
@@ -461,6 +477,7 @@ function saveMail()
    wp_safe_redirect(wp_get_referer());
 }
 
+// Check if value is number
 function numeric($num){
     // will check if is numeric
     $int = $num;
@@ -471,6 +488,7 @@ function numeric($num){
     else return true;
 }
 
+// Function to upload files
 function uploadFile($file) {
 //    The directory where the file is going to go.
     $targetDir = __DIR__ . '\attachments\\';
@@ -493,30 +511,47 @@ function uploadFile($file) {
     }
 }
 
-function calculatePrice($start_date, $stop_date)
+// Calculateprices
+function calculatePrice($start_date, $stop_date, $people, $dogs)
 {
     $price = 0;
     $dates = [];
     $date_from = new DateTime($start_date);
     $date_till = new DateTime($stop_date);
 
+//    Calculate people prices
+    $people_price = ($people * 1.50);
+
+//    Add dogs to the price
+    $dogs_price = ($dogs * 15);
+    $price += $dogs_price;
+
+//  While the first date is lower than the last date, get the price from the options, and then set the price and eventually return it.
     while($date_from <= $date_till) {
         array_push($dates, $date_from);
         $date_from->modify('+1 day');
         switch ($date_from->format('m')) {
             case 1: case 2: case 3: case 10: case 11: case 12:
             $price += (int)get_option('low_price');
+            $price += $people_price;
             break;
+
             case 7: case 8:
             $price += (int)get_option('summer_price');
+            $price += $people_price;
             break;
+
             case 4: case 5: case 6: case 9:
             $price += (int)get_option('late_price');
+            $price += $people_price;
             break;
         }
     }
+
     return $price;
 }
+
+// Add actions
 
 add_action('admin_post_prices_send', 'setPrices');
 add_action('admin_post_delete_booking', 'deleteBooking');

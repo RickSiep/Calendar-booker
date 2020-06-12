@@ -59,12 +59,17 @@
 }
 
 .booking-form-blue-color {
-    color: #00bff3;
+    color: #6a78a1;
 }
 
 .booking-form-divider.booking-form-right {
     margin: 20px;
     align-self: center;
+}
+
+#error_message_booking_form {
+    color: red;
+    display: none;
 }
 
 @media only screen and (max-width: 992px) {

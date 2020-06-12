@@ -1,5 +1,4 @@
 <?php
-//session_start();
 
 class FormDate
 {
@@ -7,23 +6,9 @@ class FormDate
 
     public function createForm()
     {
-
-////      Token to prevent CSRF
-//        $token = md5(uniqid(rand(), TRUE));
-//        $_SESSION['token'] = $token;
-//
-//        if (!isset($_SESSION['token']))
-//        {
-//            $_SESSION['token'] = md5(uniqid(rand(), TRUE));
-//        }
-
         ?>
-            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="POST">
+            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="POST" id="booking_form">
                 <input type="hidden" name="action" value="save_date_submit">
-<!--                <input type="hidden" name="token" value="-->
-                <?php //echo $token; ?>
-                <!--" />-->
-
                 <div class="booking-form-wrapper">
 
                     <div class="booking-form-divider booking-form-left">
@@ -56,9 +41,12 @@ class FormDate
 
                     <div class="booking-form-divider booking-form-right">
 
-                        <div class="booking-form-input">
-                            <label for="phone_form">Personen boven de 13</label>
+                        <label for="person_form">Personen 13+ en aantal honden</label>
+                        <br>
+                        <div class="booking-form-dates">
                             <input type="number" id="person_form" placeholder="Personen" name="people" required>
+                            <i class="fas fa-minus fa-2x booking-form-icon"></i>
+                            <input type="number" id="dog_form" name="dogs" placeholder="Honden" required>
                         </div>
 
                         <div class="booking-form-price-section">
@@ -78,7 +66,7 @@ class FormDate
                             </div>
 
                             <div class="booking-form-input">
-                                <input type="submit" value="Boek nu!">
+                                <input type="submit" value="Boek nu!" id="booking_form_submit">
                             </div>
 
                         </div>
@@ -92,18 +80,9 @@ class FormDate
 
     public function createAdminForm()
     {
-//      Token to prevent CSRF
-//        $token = md5(uniqid(rand(), TRUE));
-//        $_SESSION['token'] = $token;
-//
-//        if (!isset($_SESSION['token']))
-//        {
-//            $_SESSION['token'] = md5(uniqid(rand(), TRUE));
-//        }
         ?>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="POST">
             <input type="hidden" name="action" value="save_date_submit">
-<!--            <input type="hidden" name="token" value="--><?php //echo $token; ?><!--" />-->
 
             <div class="booking-form-wrapper">
                 <div class="booking-form-divider booking-form-left">
@@ -136,20 +115,22 @@ class FormDate
 
                 <div class="booking-form-divider booking-form-right">
 
-                    <div class="booking-form-input">
-                        <label for="phone_form">Personen boven de 13</label>
+                    <label for="person_form">Personen 13+ en aantal honden</label>
+                    <br>
+                    <div class="booking-form-dates">
                         <input type="number" id="person_form" placeholder="Personen" name="people" required>
+                        <i class="fas fa-minus fa-2x booking-form-icon"></i>
+                        <input type="number" id="dog_form" name="dogs" placeholder="Honden" required>
                     </div>
 
                     <div class="booking-form-price-section">
-
                         <div class="booking-form-price-text">
-                            <p>Betaling een week van tevoren</p>
+                            <p>Betaling een week van te voren</p>
                             <p id="price_first" class="booking-form-blue-color"></p>
                         </div>
 
                         <div class="booking-form-price-text">
-                            <p>Op aankomst</p>
+                            <p>Betalen zo snel mogelijk</p>
                             <p id="price_second" class="booking-form-blue-color"></p>
                         </div>
 
@@ -158,9 +139,11 @@ class FormDate
                             <p id="total_price" class="booking-form-blue-color"></p>
                         </div>
 
-                    </div>
+                        <div class="booking-form-input">
+                            <input type="submit" value="Boek nu!" id="booking_form_submit">
+                        </div>
 
-                    <input type="submit" value="Boek nu!">
+                    </div>
 
                 </div>
             </div>
@@ -171,24 +154,44 @@ class FormDate
 
     public static function dataFormSubmit()
     {
-//        if ($_POST['token'] == $_SESSION['token'])
-//        {
-            global $wpdb;
+        global $wpdb;
 
-            $table_name = $wpdb->prefix . 'bookings';
+        $table_name = $wpdb->prefix . 'bookings';
 
-            $name = sanitize_text_field($_POST['name']);
-            $email = sanitize_text_field($_POST['email']);
-            $phone = sanitize_text_field($_POST['phone']);
-            $people = sanitize_text_field($_POST['people']);
-            $date_from = sanitize_text_field($_POST['from']);
-            $date_till = sanitize_text_field($_POST['till']);
-            $price = calculatePriceForm($date_from, $date_till, $people);
+//        Get all post fields
+        $name = sanitize_text_field($_POST['name']);
+        $email = sanitize_text_field($_POST['email']);
+        $phone = sanitize_text_field($_POST['phone']);
+        $people = sanitize_text_field($_POST['people']);
+        $dogs = sanitize_text_field($_POST['dogs']);
+        $date_from = sanitize_text_field($_POST['from']);
+        $date_till = sanitize_text_field($_POST['till']);
 
-            $date_till_dateTime = new DateTime($date_till);
+//        Calculate the price
+        $price = calculatePriceForm($date_from, $date_till, $people, $dogs);
 
+//        Set time so that we can save it with extra time.
+        $date_till_dateTime = new DateTime($date_till);
+
+//        Get date from and add the time so that we can compare it with the database
+        $date_from_time = $date_from . ' 00:00:00';
+
+//        Check if start date already exists so that we can't get any duplicates
+        $results = $wpdb->get_row(
+            "    SELECT *
+                 FROM  $table_name
+                 WHERE start_date = '{$date_from_time}'"
+        );
+
+//        If we get a duplicate result, show error page, else we'll save the values
+        if (isset($results)) {
+            wp_safe_redirect(home_url() . '/error-reserveren');
+        } else {
+
+//          Set time so that the calendar.js counts it as an extra day
             $date_till_dateTime->setTime(12, 55);
 
+//          Insert the values into the database.
             $wpdb->insert(
                 $table_name,
                 [
@@ -202,35 +205,32 @@ class FormDate
                     'created_at' => current_time('mysql')
                 ]
             );
-//        }
 
-////      remove all session variables
-//        session_unset();
-//
-////      destroy the session
-//        session_destroy();
+//          Check the mail text for variables, and if they contain them, replace the string with the value of the var.
+            $search = ['$name', '$price'];
+            $replace = [$name, $price];
+            $mailText = nl2br(file_get_contents(get_option('calendar_mail')));
 
-        $search = ['$name', '$price'];
-        $replace = [$name, $price];
-        $mailText = nl2br(file_get_contents(get_option('calendar_mail')));
+            $mailTest = str_replace($search, $replace, $mailText);
 
-        $mailTest = str_replace($search, $replace, $mailText);
+//          Send a mail to the customer who made a reservation, and one to the owner of the site
+            wp_mail($email, 'Cadzand boeking', $mailTest, 'Content-Type: text/html; charset=UTF-8', get_option('attachment'));
 
-        wp_mail($email, 'Cadzand boeking', $mailTest, 'Content-Type: text/html; charset=UTF-8', get_option('attachment'));
+            wp_mail('e.willems@ma-web.nl', 'Cadzand boeking',
+                '<h2>Een nieuwe boeking op Vakantiehuis Cadzand!</h2>
+                    <br>
+                    ' . $email . '<p>Heeft een boeking gemaakt, van ' . $date_from . ' tot ' . $date_till . '</p>
+                    <br>
+                    <p>Voor  €' . $price . ' euro</p>'
+                , 'Content-Type: text/html; charset=UTF-8');
 
-        wp_mail('rick-siepelinga@hotmail.com', 'Cadzand boeking',
-            '<h2>Een nieuwe boeking</h2>
-             <br>
-             ' . $email . '<p>Heeft een boeking gemaakt, van ' . $date_from . ' tot ' . $date_till . '</p>
-             <br>
-              <p>Voor  €' . $price . ' euro</p>'
-            , 'Content-Type: text/html; charset=UTF-8');
-
-        wp_safe_redirect(wp_get_referer());
+            wp_safe_redirect(home_url() . '/succes');
+        }
     }
 }
 
-function calculatePriceForm($start_date, $stop_date, $people)
+//  A function to calculate the price, since we need to check if no one tampered with the javascript price
+function calculatePriceForm($start_date, $stop_date, $people, $dogs)
 {
     $price = 0;
     $dates = [];
@@ -240,6 +240,11 @@ function calculatePriceForm($start_date, $stop_date, $people)
 //    Calculate people prices
     $people_price = ($people * 1.50);
 
+//    Add dogs to the price
+    $dogs_price = ($dogs * 15);
+    $price += $dogs_price;
+
+//  While the first date is lower than the last date, get the price from the options, and then set the price and eventually return it.
     while($date_from <= $date_till) {
         array_push($dates, $date_from);
         $date_from->modify('+1 day');
@@ -248,16 +253,19 @@ function calculatePriceForm($start_date, $stop_date, $people)
             $price += (int)get_option('low_price');
             $price += $people_price;
             break;
+
             case 7: case 8:
             $price += (int)get_option('summer_price');
             $price += $people_price;
             break;
+
             case 4: case 5: case 6: case 9:
             $price += (int)get_option('late_price');
             $price += $people_price;
             break;
         }
     }
+
     return $price;
 }
 
